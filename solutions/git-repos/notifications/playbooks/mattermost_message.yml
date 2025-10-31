@@ -1,0 +1,20 @@
+---
+- name: Send a message to the chat group
+  hosts: "{{ node | default('eos') }}"
+  gather_facts: false
+  tasks:
+    - name: Send the message
+      ansible.builtin.uri:
+        url: http://mattermost.lab.example.com:8065/hooks/zdjedy378jdnfr3axorygfjhih
+        method: POST
+        headers:
+          Content-Type: application/json
+        body_format: json
+        body:
+          text: |
+            # Alert: {{ node }}
+            #### A network admin user was created : {{ admin }}
+      delegate_to: workstation.lab.example.com
+      when:
+        - node is defined
+        - admin is defined

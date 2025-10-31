@@ -1,0 +1,18 @@
+---
+- name: Deploy production application
+  hosts: servera.lab.example.com
+  become: true
+  vars:
+  tasks:
+    - name: Clone the repository and checkout the main branch
+      ansible.builtin.git:
+        repo: 'https://git.lab.example.com/student/gitops_application.git'
+        dest: /tmp/prod/gitops_application
+        version: main
+
+    - name: Deploy the production application
+      ansible.builtin.copy:
+        src: /tmp/prod/gitops_application/
+        dest: /var/www/html/prod/
+        mode: '0755'
+        remote_src: true

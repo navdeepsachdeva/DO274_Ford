@@ -1,0 +1,18 @@
+---
+- name: Deploy development application
+  hosts: servera.lab.example.com
+  become: true
+  vars:
+  tasks:
+    - name: Clone the repository and checkout the devel branch
+      ansible.builtin.git:
+        repo: 'https://git.lab.example.com/student/gitops_application.git'
+        dest: /tmp/dev/gitops_application
+        version: devel
+
+    - name: Deploy the development application
+      ansible.builtin.copy:
+        src: /tmp/dev/gitops_application/
+        dest: /var/www/html/dev/
+        mode: '0755'
+        remote_src: true

@@ -1,0 +1,34 @@
+---
+- name: Identifying new admin users
+  hosts: eos
+  sources:
+    - name: Collect events from kafka
+      ansible.eda.kafka:
+        host: utility.lab.example.com
+        port: 9092
+        topic: users
+
+  rules:
+    - name: New admin user
+      condition: >
+        event.body.fields.role is search("SYSTEM_ROLE_ADMIN")
+        and event.body.tags.username != "admin"
+        and event.body.tags.username != "student"
+      action:
+        post_event:
+          event:
+            new_user: "{{ event.body.tags.username }}"
+            managed_node: "{{ event.body.tags.source }}"
+#         debug:
+#           msg: "The {{ event.body.tags.username }} admin user was created"
+    - name: Send a chat messag
+      condition: event.new_user is defined
+      action:
+        run_job_template:
+          name: Send a message to mattermost
+          organization: Default
+          post_events: true
+          job_args:
+            extra_vars:
+              admin: "{{ event.new_user }}"
+              node: "{{ event.managed_node }}"

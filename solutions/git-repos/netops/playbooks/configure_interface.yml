@@ -1,0 +1,26 @@
+---
+- name: Configure Arista interface
+  hosts: "{{ ansible_eda['event']['body']['tags']['source'] | default('eos') }}"
+  become: true
+  gather_facts: false
+  tasks:
+    - name: Download network configuration from Git
+      ansible.builtin.git:
+        repo: https://git.lab.example.com/student/arista-configuration.git
+        dest: /tmp/srv
+        clone: true
+
+    - name: Include networking configuration variables
+      ansible.builtin.include_vars: /tmp/srv/switch_desired_conf.yml
+
+    - name: Merge layer 2 interface configuration
+      arista.eos.eos_l2_interfaces:
+        config: "{{ l2_interface_config }}"
+        state: merged
+
+    - name: Enable interface
+      arista.eos.eos_interfaces:
+        config:
+          - name: Ethernet1
+            enabled: true
+

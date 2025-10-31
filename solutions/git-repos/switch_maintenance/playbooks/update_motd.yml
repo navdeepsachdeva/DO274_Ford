@@ -1,0 +1,31 @@
+---
+- name: Set EOS motd
+  hosts: eos
+  gather_facts: false
+  become: true
+  tasks:
+    - name: Set new MOTD fact
+      ansible.builtin.set_fact:
+        new_motd: "{{ ansible_eda['event']['payload']['text'] |
+                   replace('update-motd ','') }}"
+
+    - name: Update MOTD
+      arista.eos.eos_banner:
+        banner: login
+        text: "{{ new_motd }}"
+
+- name: Send a confirmation message to Mattermost
+  hosts: workstation.lab.example.com
+  tasks:
+    - name: Send the message
+      ansible.builtin.uri:
+        url: http://mattermost.lab.example.com:8065/hooks/a8my9aia1fbs9kw97bp87y1g5r
+        method: POST
+        headers:
+          Content-Type: application/json
+        body_format: json
+        body:
+          text: >
+            The MOTD for the '{{ item }}' managed node
+            has been set to: '{{ hostvars[item]["new_motd"] }}'
+      loop: "{{ groups['eos'] }}"
