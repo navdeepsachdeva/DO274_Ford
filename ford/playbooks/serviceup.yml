@@ -1,0 +1,8 @@
+- name:  No Fixing Web Server
+  hosts: servera*
+  gather_facts: false
+  remote_user: devops
+  tasks:
+    - name: Print Event As it is
+      ansible.builtin.debug:
+        msg: "Everything is Fine"

@@ -1,0 +1,66 @@
+- name: Listen for events on a URL Check
+  hosts: servera*
+  sources:
+    - name: Match events to URL Check
+      ansible.eda.url_check:
+        urls:
+          - http://servera.lab.example.com/index.html
+        delay: 10
+
+
+  rules:
+    # - name: Print the Event
+    #   condition: true
+    #   actions:
+    #     - print_event:
+    #         pretty: true
+
+    - name: Website UP
+      condition: event.url_check.status == "up"
+      actions:
+        - print_event:
+            pretty: true
+
+        - run_playbook:                       
+            name: playbooks/serviceup.yml
+
+    - name: Website Down / Start Service
+      # condition: event.url_check.status == "down"
+      condition: >
+        event.url_check.status == "down"
+        and event.url_check.error_msg is search("Cannot connect to host")
+      actions:
+        - print_event:
+            pretty: true
+        - run_module:
+            name: ansible.builtin.debug
+            module_args:
+              msg: "{{ event.name }}--{{ event.type}}"
+                  # {{ event.error_msg }} for
+                  # {{ event.url }}
+            var_root:
+              meta.source: meta.source
+              # url_check: url_check
+
+        - run_playbook:
+            name: playbooks/webservice.yml
+            post_events: true
+            extra_vars:
+              myevent: "{{ event }}"
+        
+    - name: Website Down / Deploy App
+      condition: >
+        event.url_check.status == "down"
+        and event.url_check.status_code == 404
+      actions:
+        - print_event:
+            pretty: true
+        - run_module:
+            name: ansible.builtin.debug
+            module_args:
+              msg: "{{ event.url_check.status_code }} for {{ event.url_check.url }}"
+        - run_playbook:
+            name: playbooks/webfile.yml
+            # post_events: true
+            # extra_vars:
+            #   myevent: "{{ event }}"

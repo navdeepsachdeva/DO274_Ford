@@ -1,0 +1,10 @@
+- name:  Fix Web Server
+  hosts: servera*
+  gather_facts: false
+  remote_user: devops
+  tasks:
+    - name: Start web service
+      ansible.builtin.service:
+        name: httpd
+        state: started
+      become: true

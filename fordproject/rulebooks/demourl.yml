@@ -1,0 +1,45 @@
+- name: Listen for events on a URL Check
+  hosts: all
+  sources:
+    - name: Match events to URL Check
+      ansible.eda.url_check:
+        urls:
+          - http://servera.lab.example.com/index.html
+        delay: 10
+
+
+  rules:
+    - name: Website UP
+      condition: event.url_check.status == "up"
+      actions:
+        - print_event:
+            pretty: true
+
+        - run_job_template:
+            name: ServiceUP
+            organization: Default
+
+    - name: Website Down / Start Service
+      condition: >
+        event.url_check.status == "down"
+        and event.url_check.error_msg is search("Cannot connect to host")
+      actions:
+        - print_event:
+            pretty: true
+
+        - run_job_template:
+            name: WebStart
+            organization: Default
+
+        
+    - name: Website Down / Deploy App
+      condition: >
+        event.url_check.status == "down"
+        and event.url_check.status_code == 404
+      actions:
+        - print_event:
+            pretty: true
+
+        - run_job_template:
+            name: WebFile
+            organization: Default
